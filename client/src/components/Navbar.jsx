@@ -35,7 +35,17 @@ export default function Navbar() {
           )}
 
           <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-            <span className="text-sm text-gray-500">{user?.name}</span>
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <span className="text-blue-600 text-xs font-semibold">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-sm text-gray-700 font-medium">{user?.name}</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="text-sm text-red-500 hover:text-red-600 font-medium"

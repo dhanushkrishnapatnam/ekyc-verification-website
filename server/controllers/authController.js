@@ -1,15 +1,12 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-const validatePassword = (password) => {
-  const regex = /^(?=.*[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-  return regex.test(password);
-};
+const validatePassword = (p) =>
+  /^(?=.*[0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(p);
 
 // @route POST /api/auth/register
 const registerUser = async (req, res) => {
@@ -129,4 +126,79 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getSecurityQuestion, resetPassword };
+// @route GET /api/auth/profile
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email, currentPassword, newPassword, securityQuestion, securityAnswer } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+      user.email = email;
+    }
+
+    if (name) user.name = name;
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required to set a new password' });
+      }
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      if (!validatePassword(newPassword)) {
+        return res.status(400).json({
+          message: 'New password must be at least 8 characters with at least 1 number or symbol'
+        });
+      }
+      user.password = newPassword;
+    }
+
+    if (securityQuestion) user.securityQuestion = securityQuestion;
+    if (securityAnswer) user.securityAnswer = securityAnswer.trim().toLowerCase();
+
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      securityQuestion: user.securityQuestion,
+      createdAt: user.createdAt,
+      token: generateToken(user._id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getSecurityQuestion,
+  resetPassword,
+  getProfile,
+  updateProfile
+};

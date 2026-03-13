@@ -10,6 +10,7 @@ import KycHistory from './pages/KycHistory';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminApplications from './pages/AdminApplications';
 import ApplicationDetail from './pages/ApplicationDetail';
+import Profile from './pages/Profile';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/kyc/submit" element={<ProtectedRoute><KycForm /></ProtectedRoute>} />
         <Route path="/kyc/status" element={<ProtectedRoute><KycStatus /></ProtectedRoute>} />
         <Route path="/kyc/history" element={<ProtectedRoute><KycHistory /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/applications" element={<ProtectedRoute adminOnly><AdminApplications /></ProtectedRoute>} />
         <Route path="/admin/application/:id" element={<ProtectedRoute adminOnly><ApplicationDetail /></ProtectedRoute>} />
